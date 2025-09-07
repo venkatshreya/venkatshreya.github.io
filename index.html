@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wedding Invitation</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  
+  <style>
+  /* Base styles */
+:root {
+  --bg: #fff9f2;
+  --accent: #d35400;
+  --accent-alt: #f39c12;
+  --text: #442200;
+  --soft: #ffe0bd;
+  --grad: linear-gradient(135deg,#fff2e0,#ffd9a0 40%,#ffc978 70%,#ffb347);
+  --shadow: 0 6px 18px -6px rgba(0,0,0,.25);
+  --swirl: conic-gradient(from 90deg at 50% 50%, #ffcb9a, #ffe9d2, #ffc78f, #ffcb9a);
+}
+* {box-sizing:border-box; margin:0; padding:0;}
+html,body {height:100%;}
+body {
+  font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-y: scroll;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scroll snapping container */
+.snap-container {height:100vh; width:100%; overflow-y:scroll; scroll-snap-type:y mandatory;}
+.panel {min-height:100vh; width:100%; position:relative; scroll-snap-align:start; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:clamp(1.5rem,4vw,4rem) clamp(1rem,4vw,3rem); transform:scale(var(--panel-scale,1.06)); transition:transform 1.3s cubic-bezier(.16,.72,.25,1), opacity 1s ease; opacity:.96; will-change:transform,opacity;}
+.panel-active {--panel-scale:1 !important; opacity:1 !important;}
+
+/* Progress bar */
+.progress {position:fixed; top:0; left:0; width:100%; z-index:999; height:4px;}
+.progress .bar {height:4px; width:100%; background:rgba(0,0,0,.1);}
+.progress .bar__inner {display:block; height:100%; width:0; background:linear-gradient(90deg,#ff7e5f,#feb47b); transition:width .2s ease-out;}
+
+.hero {background: radial-gradient(circle at 50% 45%, #fff8ee 0%, #ffe1bd 60%, #f7b977 100%); text-align:center; overflow:hidden; padding-top:4rem;}
+/* Always show ganesha-wrapper fixed at the top, full width, above all content */
+.ganesha-wrapper {
+  position: fixed !important;
+  top: 25vw;
+  left: 0;
+  width: 100vw;
+  max-width: 100vw;
+  margin: 0;
+  /* z-index: 2001; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,.25));
+  background: transparent;
+  transition: none;
+  transform: none;
+}
+/* After first scroll, shrink & pin to top */
+
+/* Hero content fade (except ganesha) */
+.hero-fadable{transition:opacity .5s ease, transform .7s cubic-bezier(.16,.72,.25,1);}
+.hero.hero-fading .hero-fadable{opacity:0; transform:translateY(-30px); pointer-events:none;}
+.ganesha {width:100%; height:auto; animation: float 8s ease-in-out infinite, auraPulse 6s ease-in-out infinite; overflow:visible;}
+@keyframes auraPulse {0%,100%{filter:drop-shadow(0 0 0 rgba(255,168,40,.0));}50%{filter:drop-shadow(0 0 18px rgba(255,168,40,.55));}}
+
+/* Integrated Ganesha (rotating mandala) styles */
+.hero .divset {position:relative; width:min(62vw,520px); aspect-ratio:1/1; margin:0 auto; overflow:visible;}
+.hero svg.rotate-center {width:100%; height:100%; animation:rotate-center 28s linear infinite;}
+.hero .ganesha-svg {overflow:visible;}
+@keyframes rotate-center {from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+.hero .st4 {fill:#f9c149; filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));}
+.hero .divset:after {content:""; position:absolute; inset:-6%; background:radial-gradient(circle at 50% 50%,rgba(255,210,120,.5),rgba(255,138,0,.15) 55%,transparent 70%); filter:blur(8px); z-index:-1;}
+/* .ganesha-wrapper {display:flex; align-items:center; justify-content:center;} */
+@keyframes float {0%,100%{transform:translateY(0);} 50%{transform:translateY(-14px);} }
+
+.title {font-size:clamp(2.6rem,8vw,5rem); letter-spacing:.05em; background:linear-gradient(90deg,#c0392b,#d35400,#f39c12); -webkit-background-clip:text; background-clip:text; color:transparent; text-shadow:0 2px 12px rgba(255,140,0,.35);} 
+.subtitle {max-width:650px; margin:1rem auto 0; font-size:clamp(1rem,2.5vw,1.35rem); line-height:1.45;}
+.names {font-size:clamp(2.2rem,6vw,4rem); margin-top:1.4rem; font-weight:600; letter-spacing:.03em; position:relative;}
+.amp {padding:0 .5ch; font-size:1em; color:#ff6a00;}
+.swastika {width:100px; height:100px; margin:1.4rem auto 0; /* animation removed for a steadier auspicious symbol */}
+.swastika__svg {width:100%; height:100%; filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));}
+@keyframes spin-slow {0%{transform:rotate(0);} 100%{transform:rotate(360deg);} }
+
+.decor {position:absolute; font-size:clamp(3rem,10vw,8rem); opacity:.12; font-weight:700; color:#b35400; pointer-events:none;}
+.decor--tl {top:1rem; left:1rem;}
+.decor--tr {top:1rem; right:1.2rem;}
+.scroll-hint {position:absolute; bottom:2rem; left:50%; transform:translateX(-50%); opacity:.85; animation: bounce 2.2s infinite; font-size:.85rem; display:flex; flex-direction:column; align-items:center; gap:.35rem;}
+.scroll-hint .mouse {width:22px; height:32px; border:2px solid #d35400; border-radius:14px; position:relative;}
+.scroll-hint .mouse:before {content:""; position:absolute; top:6px; left:50%; width:4px; height:6px; background:#d35400; border-radius:2px; transform:translateX(-50%); animation: wheel 1.3s infinite;}
+.scroll-hint .arrow {font-size:1.4rem; color:#d35400; line-height:1;}
+@keyframes wheel {0%{opacity:0; transform:translate(-50%,0);} 50%{opacity:1;} 100%{opacity:0; transform:translate(-50%,8px);} }
+@keyframes bounce {0%,100%{transform:translate(-50%,0);} 50%{transform:translate(-50%,8px);} }
+
+/* Story section */
+.story {background:linear-gradient(135deg,#fff4e8 0%, #ffd3a6 60%, #ffb974 100%);}
+.story .content {max-width:1000px; margin-inline:auto;}
+.story h2 {font-size:clamp(2.2rem,5.5vw,3.4rem); margin-bottom:1rem; background:linear-gradient(90deg,#8e2d00,#d35400,#f39c12); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.story p {font-size:clamp(1rem,2vw,1.15rem); line-height:1.6; margin-bottom:1rem;}
+.cards {display:grid; gap:clamp(1rem,3vw,2rem); grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr)); margin-top:1.5rem;}
+.card {background:rgba(255,255,255,.45); backdrop-filter:blur(8px); padding:1.3rem 1.2rem 1.6rem; border-radius:22px; box-shadow:0 4px 16px -6px rgba(0,0,0,.25); position:relative; overflow:hidden; border:1px solid rgba(255,255,255,.6);}
+.card:before {content:""; position:absolute; inset:0; background:linear-gradient(125deg,rgba(255,255,255,.4),rgba(255,255,255,0) 60%); pointer-events:none;}
+.card h3 {font-size:1.35rem; margin-bottom:.5rem; color:#c0392b; letter-spacing:.04em;}
+.card p {margin:0;}
+
+/* Celebration */
+.celebration {background:#1b1b1b; color:#ffe8d0; overflow:hidden;}
+.celebration .content {position:relative; z-index:2; text-align:center; max-width:800px;}
+.celebration h2 {font-size:clamp(2.4rem,7vw,4rem); margin-bottom:1rem; background:linear-gradient(90deg,#ffaf19,#ffdd55,#ffaf19); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.celebration p {font-size:clamp(1rem,2.2vw,1.3rem); line-height:1.55;}
+.mantra {margin-top:1.25rem; font-size:clamp(1.3rem,3vw,2rem); font-weight:600; letter-spacing:.06em; color:#ffcf66; text-shadow:0 0 18px rgba(255,208,128,.55);}
+#confettiCanvas {position:absolute; inset:0; width:100%; height:100%;}
+
+/* Details */
+.details {background:linear-gradient(150deg,#fff5ec,#ffd9b3 55%,#ffc68a);}
+.details .content {max-width:900px; text-align:center;}
+.details h2 {font-size:clamp(2.1rem,5.2vw,3.2rem); margin-bottom:1.2rem; background:linear-gradient(90deg,#bf360c,#d84315,#ff7043); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.info {list-style:none; padding:0; margin:0 0 1.4rem; display:grid; gap:.9rem; font-size:clamp(1rem,2vw,1.2rem);}
+.info li {background:rgba(255,255,255,.5); padding:.75rem 1rem; border-radius:14px; box-shadow:0 3px 10px -4px rgba(0,0,0,.25);}
+.rsvp a {color:#c0392b; font-weight:600; text-decoration:none; border-bottom:2px solid #c0392b33;}
+.rsvp a:hover {color:#e74c3c;}
+.footer {margin-top:2rem; font-size:.85rem; opacity:.8; text-align:center;}
+
+/* Animations on reveal */
+.slide-up, .slide-left, .slide-right {opacity:0; transform:translateY(40px) scale(1.04); transition:opacity 1.05s cubic-bezier(.16,.72,.25,1), transform 1.25s cubic-bezier(.16,.72,.25,1); will-change:transform,opacity;}
+.slide-left {transform:translateX(-60px) scale(1.04);}
+.slide-right {transform:translateX(60px) scale(1.04);}
+.revealed {opacity:1 !important; transform:translate(0,0) !important;}
+.delay-1 {transition-delay:.15s;} .delay-2 {transition-delay:.3s;} .delay-3 {transition-delay:.45s;} .delay-4 {transition-delay:.6s;}
+
+/* Fancy separators (unused but nice) */
+.separator {height:4px; width:180px; background:linear-gradient(90deg,transparent,#d35400,#f39c12,transparent); border-radius:2px; margin:1.2rem auto; position:relative;}
+.separator:before, .separator:after {content:""; position:absolute; top:50%; width:10px; height:10px; background:#d35400; border-radius:50%; transform:translateY(-50%);} 
+.separator:before {left:0;} .separator:after {right:0;}
+
+/* Confetti base styles */
+.confetti-piece {position:absolute; width:10px; height:16px; top:0; left:0; opacity:0; will-change:transform,opacity;}
+
+/* Media tweaks */
+@media (max-width:700px) {
+  .cards {grid-template-columns:1fr;}
+  .swastika {width:70px; height:70px;}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swastika, .ganesha, .scroll-hint, .confetti-piece {animation:none !important;}
+  .slide-up, .slide-left, .slide-right {transition:.01s linear;}
+}
+
+    body
+{
+  margin:0;
+  padding:0;
+  background-image: -webkit-gradient(linear, left bottom, right top, from(#38438b), color-stop(#944b94), color-stop(#d75a88), color-stop(#ff7e71), color-stop(#ffb25f), to(#ffeb68));
+    background-image: -webkit-linear-gradient(left bottom, #38438b, #944b94, #d75a88, #ff7e71, #ffb25f, #ffeb68);
+    background-image: -o-linear-gradient(left bottom, #38438b, #944b94, #d75a88, #ff7e71, #ffb25f, #ffeb68);
+    background-image: linear-gradient(to right top, #38438b, #944b94, #d75a88, #ff7e71, #ffb25f, #ffeb68);
+}
+
+.divset
+{
+  overflow: hidden;
+    height: 800px;
+    width: 800px;
+    margin:-20px auto;
+}
+
+.rotate-center {
+	/* Slowed main outer circle rotation */
+	-webkit-animation: rotate-center 28s linear infinite both;
+	        animation: rotate-center 28s linear infinite both;
+}
+
+.img_one
+{
+    color: red;
+     position: absolute;
+
+	/* Responsive sizing & true centering */
+	width: clamp(200px, 56vw, 700px);
+	height: auto;
+	transform: translate(-50%, -50%);
+}
+
+.img_two
+{
+     position: absolute;
+
+	/* Responsive sizing & true centering */
+	width: clamp(160px, 48vw, 650px);
+	height: auto;
+	transform: translate(-50%, -50%);
+	/* margin: 0; remove legacy negative margins */
+    	/* Responsive sizing & true centering */
+
+	/* margin: 0; */
+     /* position: absolute; */
+
+    /* width: 530px;
+    
+    margin-top: -258px;
+    /* margin-left: -268px; */
+}
+
+.img_three
+{
+     position: absolute;
+ 
+	/* Responsive sizing & true centering */
+	width: clamp(120px, 40vw, 500px);
+	height: auto;
+	transform: translate(-50%, -50%);
+	margin: 0; /* remove legacy negative margins */
+     /* position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 470px;
+    height: 470px;
+    margin-top: -220px;
+    margin-left: -233px; */
+}
+/* ----------------------------------------------
+ * Generated by Animista on 2019-9-11 11:43:33
+ * Licensed under FreeBSD License.
+ * See http://animista.net/license for more info. 
+ * w: http://animista.net, t: @cssanimista
+ * ---------------------------------------------- */
+
+/**
+ * ----------------------------------------
+ * animation rotate-center
+ * ----------------------------------------
+ */
+@-webkit-keyframes rotate-center {
+  0% {
+    -webkit-transform: rotate(0);
+            transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+@keyframes rotate-center {
+  0% {
+    -webkit-transform: rotate(0);
+            transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+
+
+
+.rotate-center-sec {
+	/* Slowed second circle rotation */
+	-webkit-animation: rotate-center-re 50s linear infinite reverse both;
+	        animation: rotate-center-re 50s linear infinite reverse both;
+}
+
+
+
+/* ----------------------------------------------
+ * Generated by Animista on 2019-9-11 12:59:11
+ * Licensed under FreeBSD License.
+ * See http://animista.net/license for more info. 
+ * w: http://animista.net, t: @cssanimista
+ * ---------------------------------------------- */
+
+/**
+ * ----------------------------------------
+ * animation rotate-center
+ * ----------------------------------------
+ */
+@-webkit-keyframes rotate-center-re {
+  0% {
+    -webkit-transform: rotate(0);
+            transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+@keyframes rotate-center-re {
+  0% {
+    -webkit-transform: rotate(0);
+            transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+
+
+
+.rotate-center-third {
+	/* Slowed third inner circle rotation */
+	-webkit-animation: rotate-center-th 80s linear infinite both;
+	        animation: rotate-center-th 80s linear infinite both;
+}
+
+/* ----------------------------------------------
+ * Generated by Animista on 2019-9-11 13:11:6
+ * Licensed under FreeBSD License.
+ * See http://animista.net/license for more info. 
+ * w: http://animista.net, t: @cssanimista
+ * ---------------------------------------------- */
+
+/**
+ * ----------------------------------------
+ * animation rotate-center
+ * ----------------------------------------
+ */
+@-webkit-keyframes rotate-center-th {
+  0% {
+    -webkit-transform: rotate(0);
+            transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+@keyframes rotate-center-th {
+  0% {
+    -webkit-transform: rotate(0);
+            transform: rotate(0);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+  }
+}
+
+
+
+.ganeshJee
+{
+ position: absolute;
+    top: 50%;
+    left: 50%; 
+	/* Responsive sizing & true centering */
+	width: clamp(260px, 48vw, 600px);
+	height: auto;
+	transform: translate(-50%, -50%);
+	margin: 0; /* remove legacy negative margins */
+}
+
+@media only screen and (max-width: 600px) {
+  svg{width:750px;
+    left:0; position: absolute;
+    margin-left:-60%;
+    margin-top:10%;top:0;
+  
+  }
+}
+	.st0{display:none;}
+	.st1{display:inline;}
+	.st2{clip-path:url(#SVGID_2_);fill:#F16F00;}
+	.st3{display:inline;opacity:0.4;}
+	.st4{fill:#FCC000;}
+	.st5{opacity:0.8;}
+	.st6{fill:#FED394;}
+	.st7{display:none;opacity:0.8;}
+	.st8{display:none;fill:#FFE8CC;}
+	.st9{display:none;fill:#FFFFFF;}
+	.st10{display:none;opacity:0.5;}
+	.st11{display:inline;fill:#FFE8CC;}
+	.st12{fill:#C15E42;}
+	.st13{opacity:0.3;}
+	.st14{opacity:0.4;fill:#C15E42;}
+	.st15{opacity:0.2;}
+	.st16{fill:#FFFFFF;}
+	.st17{fill:#F3A203;}
+	.st18{fill:#FFC44D;}
+	.st19{opacity:0.3;fill:#FFFFFF;}
+	.st20{display:inline;fill:#C15E42;}
+	.st21{font-family:'KaushanScript-Regular';}
+	.st22{font-size:42.7014px;}
+	.st23{display:inline;fill:#F3A203;}
+	.st24{font-family:'PlayfairDisplay-Bold';}
+	.st25{font-size:13.0421px;}
+	.st26{letter-spacing:8;}
+  </style>
+</head>
+<body>
+    <!-- Include the top navigation bar -->
+    <nav class="topnav">
+
+      </div>
+    </nav>
+    <div class="progress">
+      <div class="bar"><span class="bar__inner" id="progressBar"></span></div>
+    </div>
+    <main class="snap-container">
+      <!-- Section 1: Ganesha Blessings -->
+      <section class="panel hero" id="hero" data-observe>
+        <div class="decor decor--tl" aria-hidden="true">ॐ</div>
+        <div class="decor decor--tr" aria-hidden="true">ॐ</div>
+        <div class="ganesha-wrapper slide-up">
+    
+          <!-- <img class="img_one rotate-center"  src="https://1.bp.blogspot.com/-zbTJP7CFU1o/XXiYo8bj14I/AAAAAAAATLc/YgdiMIILXq0LwaDbbyN-0Ew9katTRDUQQCLcBGAsYHQ/s1600/circle_first.png" alt="Smiley face" height="800px" width="800px"> -->
+    
+          <img class="img_two rotate-center-sec"
+            src="https://1.bp.blogspot.com/-zbTJP7CFU1o/XXiYo8bj14I/AAAAAAAATLc/YgdiMIILXq0LwaDbbyN-0Ew9katTRDUQQCLcBGAsYHQ/s1600/second_circle.png"
+            alt="Smiley face" height="800px" width="800px">
+    
+          <img class="img_three rotate-center-third"
+            src="https://1.bp.blogspot.com/-_COGVBH4WyY/XXijt_rn5FI/AAAAAAAATL0/sCQhgcmjUl8amPCCquFtjEmmsxc_y_fyACLcBGAsYHQ/s1600/circle_third.png"
+            alt="Smiley face" height="500px" width="500px">
+    
+          <div>
+            <img class="ganeshJee"
+              src="https://1.bp.blogspot.com/-SE1b77kYVek/XXnnVNN95NI/AAAAAAAATNY/44JshUd59xs9BG-jTUN-E6s3dgR0C3Q5ACLcBGAsYHQ/s1600/Ganesh.png"
+              height="500px" width="500px">
+          </div>
+        </div>
+
+
+        <div class="inviteText">
+          <h1 class="title slide-up delay-1">You're Invited</h1>
+          <p class="subtitle slide-up delay-2">With the blessings of Lord Ganesha we joyfully invite you to the engagement of
+          </p>
+          <br>
+          <h2 class="h1 slide-up delay-3">Shreya Yaganti <br> <span class="amp">&amp;</span><br> K Venkat Ramana Reddy</h2>
+          <div class="scroll-hint" aria-hidden="true">
+            <span class="mouse"></span>
+            <span class="arrow">↓</span>
+          </div>
+        </div>
+      </section>
+
+    
+
+    <!-- Section 3: Celebration (Confetti) -->
+    <section class="panel celebration" id="celebration" data-observe>
+      <canvas id="confettiCanvas" aria-hidden="true"></canvas>
+ <div class="decor decor--tl" aria-hidden="true">ॐ</div>
+        <div class="decor decor--tr" aria-hidden="true">ॐ</div>
+        <div class="ganesha-wrapper slide-up">
+    
+          <!-- <img class="img_one rotate-center"  src="https://1.bp.blogspot.com/-zbTJP7CFU1o/XXiYo8bj14I/AAAAAAAATLc/YgdiMIILXq0LwaDbbyN-0Ew9katTRDUQQCLcBGAsYHQ/s1600/circle_first.png" alt="Smiley face" height="800px" width="800px"> -->
+    
+          <img class="img_two rotate-center-sec"
+            src="https://1.bp.blogspot.com/-zbTJP7CFU1o/XXiYo8bj14I/AAAAAAAATLc/YgdiMIILXq0LwaDbbyN-0Ew9katTRDUQQCLcBGAsYHQ/s1600/second_circle.png"
+            alt="Smiley face" height="800px" width="800px">
+    
+          <img class="img_three rotate-center-third"
+            src="https://1.bp.blogspot.com/-_COGVBH4WyY/XXijt_rn5FI/AAAAAAAATL0/sCQhgcmjUl8amPCCquFtjEmmsxc_y_fyACLcBGAsYHQ/s1600/circle_third.png"
+            alt="Smiley face" height="500px" width="500px">
+    
+          <div>
+            <img class="ganeshJee"
+              src="https://1.bp.blogspot.com/-SE1b77kYVek/XXnnVNN95NI/AAAAAAAATNY/44JshUd59xs9BG-jTUN-E6s3dgR0C3Q5ACLcBGAsYHQ/s1600/Ganesh.png"
+              height="500px" width="500px">
+          </div>
+        </div>
+      <div class="content">
+        <h2>Celebrate With Us</h2>
+        <p>Your presence will shower blessings more sparkling than any petals or lights.</p>
+        <p class="mantra">ॐ शुभ मंगल विवाहम्</p>
+        <div class="cards">
+          <div class="card">
+            <h3>Shreya Yaganti</h3>
+            <p>D/O Smt. Padmaja Reddy Yaganti &<br> Sh. Krishna Reddy Yaganti</p>
+          </div>
+          <div class="card">
+            <h3>K Venkat Ramana Reddy</h3>
+            <p>S/O Smt. Usha Rani &<br> Sh. K Laxma Reddy</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Venue & Details -->
+    <section class="panel details" id="details" data-observe>
+       <div class="decor decor--tl" aria-hidden="true">ॐ</div>
+        <div class="decor decor--tr" aria-hidden="true">ॐ</div>
+        <div class="ganesha-wrapper slide-up">
+    
+          <!-- <img class="img_one rotate-center"  src="https://1.bp.blogspot.com/-zbTJP7CFU1o/XXiYo8bj14I/AAAAAAAATLc/YgdiMIILXq0LwaDbbyN-0Ew9katTRDUQQCLcBGAsYHQ/s1600/circle_first.png" alt="Smiley face" height="800px" width="800px"> -->
+    
+          <img class="img_two rotate-center-sec"
+            src="https://1.bp.blogspot.com/-zbTJP7CFU1o/XXiYo8bj14I/AAAAAAAATLc/YgdiMIILXq0LwaDbbyN-0Ew9katTRDUQQCLcBGAsYHQ/s1600/second_circle.png"
+            alt="Smiley face" height="800px" width="800px">
+    
+          <img class="img_three rotate-center-third"
+            src="https://1.bp.blogspot.com/-_COGVBH4WyY/XXijt_rn5FI/AAAAAAAATL0/sCQhgcmjUl8amPCCquFtjEmmsxc_y_fyACLcBGAsYHQ/s1600/circle_third.png"
+            alt="Smiley face" height="500px" width="500px">
+    
+          <div>
+            <img class="ganeshJee"
+              src="https://1.bp.blogspot.com/-SE1b77kYVek/XXnnVNN95NI/AAAAAAAATNY/44JshUd59xs9BG-jTUN-E6s3dgR0C3Q5ACLcBGAsYHQ/s1600/Ganesh.png"
+              height="500px" width="500px">
+          </div>
+        </div>
+      <div class="content">
+        <h2 class="slide-up">Engagement Details</h2>
+        <ul class="info slide-up delay-1">
+          <li><strong>Date:</strong> 2nd October 2025</li>
+          <li><strong>Time:</strong> 9:00 AM</li>
+          <li><strong>Venue:</strong> Dhruv Elite and Banquets, Amberpet, Hyderabad</li>
+            <div style="display:flex;justify-content:center;">
+            <iframe
+              title="Engagement Venue - Dhruv Elite and Banquets"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3807.351916530784!2d78.51119109999999!3d17.3948911!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bcb99c02e861d29%3A0x29bf9f0ec24155b8!2sDhruv%20Elite%20and%20Banquets!5e0!3m2!1sen!2sin!4v1757269657795!5m2!1sen!2sin"
+              style="border:0;display:block;width:100%;max-width:200px;height:150px;"
+              allowfullscreen=""
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+        </ul>
+        <p class="slide-up delay-2">We look forward to celebrating love, family, and tradition with you. Kindly RSVP by 25th September.</p>
+        <style>
+        /* Minimal RSVP modal styles (self-contained) */
+        .rsvp-wrap{display:flex;gap:.8rem;justify-content:center;align-items:center;margin-top:1rem}
+        .rsvp-btn{background:#d35400;color:#fff;padding:.55rem .9rem;border-radius:10px;border:0;font-weight:600;cursor:pointer;box-shadow:var(--shadow)}
+        .rsvp-btn:active{transform:translateY(1px)}
+        .rsvp-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.45);z-index:2000}
+        .rsvp-modal.open{display:flex}
+        .rsvp-card{background:#fff;padding:1.1rem 1.2rem;border-radius:12px;min-width:280px;max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+        .rsvp-card h3{margin:0 0 .5rem;font-size:1.05rem;color:#c0392b}
+        .rsvp-field{display:flex;flex-direction:column;gap:.35rem;margin-bottom:.7rem}
+        .rsvp-field input, .rsvp-field textarea{padding:.55rem .6rem;border-radius:8px;border:1px solid #e6e6e6;font-size:.95rem}
+        .rsvp-actions{display:flex;gap:.5rem;justify-content:flex-end}
+        .rsvp-cancel{background:transparent;border:0;padding:.5rem .7rem;border-radius:8px;cursor:pointer}
+        .rsvp-submit{background:#c0392b;color:#fff;border:0;padding:.55rem .85rem;border-radius:8px;cursor:pointer}
+        .rsvp-note{font-size:.86rem;color:#666;margin-top:.45rem;text-align:center}
+        </style>
+
+        <div class="rsvp-wrap">
+          <p class="rsvp slide-up delay-3" style="margin:0">RSVP: <a href="mailto:krahulreddy0408@gmail.com">krahulreddy0408@gmail.com</a> • +91-8310496354</p>
+          <button class="rsvp-btn" id="openRsvpBtn" aria-haspopup="dialog" aria-controls="rsvpModal">RSVP</button>
+        </div>
+
+        <!-- Modal -->
+        <div id="rsvpModal" class="rsvp-modal" role="dialog" aria-modal="true" aria-labelledby="rsvpTitle">
+          <div class="rsvp-card" role="document">
+            <h3 id="rsvpTitle">RSVP — Please share your details</h3>
+            <form id="rsvpForm">
+              <div class="rsvp-field">
+                <label for="rsvpName" style="font-size:.9rem;color:#333">Name</label>
+                <input id="rsvpName" name="name" type="text" required autocomplete="name" placeholder="Your full name">
+              </div>
+              <div class="rsvp-field">
+                <label for="rsvpPhone" style="font-size:.9rem;color:#333">Phone / WhatsApp</label>
+                <input id="rsvpPhone" name="phone" type="tel" required inputmode="tel" placeholder="+91-XXXXXXXXXX">
+              </div>
+              <div class="rsvp-field">
+                <label for="rsvpMsg" style="font-size:.9rem;color:#333">Message (optional)</label>
+                <textarea id="rsvpMsg" name="message" rows="3" placeholder="Any note for hosts"></textarea>
+              </div>
+              <div class="rsvp-actions">
+                <button type="button" class="rsvp-cancel" id="rsvpCancel">Cancel</button>
+                <button type="submit" class="rsvp-submit">Send RSVP</button>
+              </div>
+            </form>
+            <div class="rsvp-note">Submission will open your email client to send details securely to the hosts. If you'd prefer automatic delivery, reply with "Auto" and we can enable a server-side endpoint.</div>
+          </div>
+        </div>
+
+        <script>
+        (function(){
+          const openBtn = document.getElementById('openRsvpBtn');
+          const modal = document.getElementById('rsvpModal');
+          const cancel = document.getElementById('rsvpCancel');
+          const form = document.getElementById('rsvpForm');
+          const TO_EMAIL = 'krahulreddy0408@gmail.com'; // destination
+
+          function open(){
+            modal.classList.add('open');
+            setTimeout(()=>document.getElementById('rsvpName').focus(), 40);
+          }
+          function close(){
+            modal.classList.remove('open');
+          }
+
+          openBtn.addEventListener('click', open);
+          cancel.addEventListener('click', close);
+          modal.addEventListener('click', e=>{ if(e.target===modal) close(); });
+          window.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+
+          form.addEventListener('submit', e=>{
+            e.preventDefault();
+            const name = document.getElementById('rsvpName').value.trim();
+            const phone = document.getElementById('rsvpPhone').value.trim();
+            const msg = document.getElementById('rsvpMsg').value.trim();
+            if(!name || !phone){ alert('Please provide name and phone.'); return; }
+
+            // Compose mailto fallback (opens user's email client with prefilled message)
+            const subject = encodeURIComponent('RSVP — ' + name);
+            const bodyLines = [
+              'I would like to RSVP for the engagement.',
+              '',
+              'Name: ' + name,
+              'Phone: ' + phone,
+              'Message: ' + (msg || '-')
+            ];
+            const body = encodeURIComponent(bodyLines.join('\n'));
+            const mailto = `mailto:${TO_EMAIL}?subject=${subject}&body=${body}`;
+
+            // Try to open mail client
+            window.location.href = mailto;
+
+            // close modal and show lightweight confirmation
+            close();
+            const confirmEl = document.createElement('div');
+            confirmEl.style.position='fixed';
+            confirmEl.style.right='1rem';
+            confirmEl.style.bottom='1rem';
+            confirmEl.style.background='#2d2d2d';
+            confirmEl.style.color='#fff';
+            confirmEl.style.padding='0.6rem 0.9rem';
+            confirmEl.style.borderRadius='8px';
+            confirmEl.style.boxShadow='0 8px 24px rgba(0,0,0,.3)';
+            confirmEl.textContent='RSVP prepared — please send the email from your mail app to complete.';
+            document.body.appendChild(confirmEl);
+            setTimeout(()=>{ confirmEl.style.opacity='0'; setTimeout(()=>confirmEl.remove(),400); },4000);
+          });
+        })();
+        </script>
+      </div>
+      <footer class="footer slide-up delay-4"> ॐ • With blessings from both families • ॐ</footer>
+    </section>
+  </main>
+
+  <script>
+  // Smooth reveal + panel zoom logic
+  const panelObserver = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        if(entry.target.classList.contains('panel')){
+          entry.target.classList.add('panel-active');
+          if(entry.target.id==='celebration') startConfettiOnce();
+          // reveal children if not already
+          entry.target.querySelectorAll('.slide-up,.slide-left,.slide-right').forEach(el=>{
+            if(!el.classList.contains('revealed')){
+              el.classList.add('revealed');
+              el.style.transform='translate(0,0) scale(1)';
+            }
+          });
+        } else {
+          entry.target.classList.add('revealed');
+          entry.target.style.transform='translate(0,0) scale(1)';
+        }
+      }
+    });
+  },{threshold:0.45, root:document.querySelector('.snap-container')||null});
+
+  document.querySelectorAll('section[data-observe]').forEach(p=>panelObserver.observe(p));
+  document.querySelectorAll('[data-observe] .slide-up, [data-observe] .slide-left, [data-observe] .slide-right').forEach(el=>panelObserver.observe(el));
+
+  // Progress bar + dynamic scaling on scroll for subtle parallax/zoom
+  const progressBar = document.getElementById('progressBar');
+  const scrollContainer = document.querySelector('.snap-container');
+  if(scrollContainer){
+    const panels = [...document.querySelectorAll('.panel')];
+    const ganeshaEl = document.querySelector('.ganesha-wrapper');
+    const heroPanel = document.getElementById('hero');
+    const handleScroll = ()=>{
+      const max = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+      const val = scrollContainer.scrollTop / max;
+      if(progressBar) progressBar.style.width = (val*100).toFixed(2)+'%';
+      // Initialize progress bar width to 0% on page load
+      if(scrollContainer.scrollTop === 0) progressBar.style.width = '0%';
+      const mid = scrollContainer.scrollTop + scrollContainer.clientHeight/2;
+      panels.forEach(p=>{
+        const rectTop = p.offsetTop;
+        const rectMid = rectTop + p.offsetHeight/2;
+        const dist = Math.abs(mid - rectMid);
+        const norm = Math.min(1, dist / (scrollContainer.clientHeight*0.95));
+        const scale = 0.96 + (0.04 * (1 - norm)); // 0.96 .. 1.0
+        p.style.setProperty('--panel-scale', scale.toFixed(4));
+      });
+      // Dynamic pin/unpin of ganesha based on leaving/entering first panel
+      if(ganeshaEl && heroPanel){
+        const st = scrollContainer.scrollTop;
+        const heroHeight = heroPanel.offsetHeight || scrollContainer.clientHeight;
+        const threshold = Math.min(heroHeight * 0.55, heroHeight - 120); // when beyond ~55% of hero
+        if(st > threshold){
+          if(!ganeshaEl.classList.contains('ganesha-pinned')){
+            ganeshaEl.classList.add('ganesha-pinned');
+          }
+        } else {
+          if(ganeshaEl.classList.contains('ganesha-pinned')){
+            ganeshaEl.classList.remove('ganesha-pinned');
+          }
+        }
+      }
+    };
+    scrollContainer.addEventListener('scroll', handleScroll, {passive:true});
+    // initial
+    handleScroll();
+  }
+
+  // Confetti effect
+  let confettiStarted = false;
+  function startConfettiOnce(){
+    if(confettiStarted) return; confettiStarted = true; startConfetti();
+  }
+
+  function startConfetti(){
+    const canvas = document.getElementById('confettiCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let w = canvas.width = canvas.offsetWidth;
+    let h = canvas.height = canvas.offsetHeight;
+    // Flower colors (soft pinks, oranges, yellows)
+    const colors = ['#ffb6b9','#ffd6a5','#fdffb6','#caffbf','#f9c5d1','#ffe29f','#ffafcc','#f6ab6c'];
+    // Each piece is a flower
+    const pieces = Array.from({length:90},()=>({
+      x: Math.random()*w,
+      y: Math.random()*h - h,
+      r: 12+Math.random()*10, // flower size
+      c: colors[Math.floor(Math.random()*colors.length)],
+      vy: 0.7+Math.random()*2.5, // slower fall
+      vx: -0.7+Math.random()*1.4, // gentle drift
+      rot: Math.random()*360,
+      vr: -1.2 + Math.random()*2.4, // slower rotation
+      tilt: Math.random()*360 // for flower orientation
+    }));
+
+    function resize(){
+      w = canvas.width = canvas.offsetWidth;
+      h = canvas.height = canvas.offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+
+    function drawFlower(ctx, r, tilt, color){
+      ctx.save();
+      ctx.rotate(tilt*Math.PI/180);
+      // Draw 5-petal flower
+      for(let i=0;i<5;i++){
+        ctx.save();
+        ctx.rotate((i*72)*Math.PI/180);
+        ctx.beginPath();
+        ctx.ellipse(0, r*0.32, r*0.22, r*0.5, 0, 0, 2*Math.PI);
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.85;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 7;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+        ctx.restore();
+      }
+      // Center
+      ctx.beginPath();
+      ctx.arc(0,0,r*0.18,0,2*Math.PI);
+      ctx.fillStyle = '#ffe066';
+      ctx.globalAlpha = 0.95;
+      ctx.shadowColor = '#ffe066';
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,w,h);
+      pieces.forEach(p=>{
+        p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+        if(p.y > h+40) {p.y = -20; p.x = Math.random()*w;}
+        if(p.x > w+20) p.x = -20; if(p.x < -20) p.x = w+20;
+        ctx.save();
+        ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+        drawFlower(ctx, p.r, p.tilt, p.c);
+        ctx.restore();
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+    // celebratory burst using DOM pieces for quick effect
+    burst();
+  }
+
+  function burst(){
+    const celebrationSection = document.getElementById('celebration');
+    if(!celebrationSection) return;
+    const count = 28;
+    for(let i=0;i<count;i++){
+      const el = document.createElement('span');
+      el.className='confetti-piece';
+      const size = 24 + Math.random()*18;
+      el.style.width = size+'px';
+      el.style.height = size+'px';
+      el.style.background = 'none';
+      el.style.left = (50 + (Math.random()*40-20))+'%';
+      el.style.top = '50%';
+      el.style.opacity = '0';
+      el.style.transform = 'translate(-50%,-50%) scale(0) rotate('+(Math.random()*360)+'deg)';
+      el.style.borderRadius = '50%';
+      el.style.boxShadow = 'none';
+      el.innerHTML = `<svg width="${size}" height="${size}" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;"><g>`+
+        Array.from({length:5}).map((_,j)=>`<ellipse cx="20" cy="11" rx="6" ry="13" fill="${colors[Math.floor(Math.random()*colors.length)]}" opacity="0.85" transform="rotate(${j*72} 20 20)"/>`).join('')+
+        `<circle cx="20" cy="20" r="6.5" fill="#ffe066" opacity="0.95"/></g></svg>`;
+      celebrationSection.appendChild(el);
+      requestAnimationFrame(()=>{
+        el.style.transition = 'transform 1.7s cubic-bezier(.15,.65,.4,1.2), opacity 1.7s ease-out';
+        const tx = (Math.random()*200 - 100);
+        const ty = (Math.random()*160 - 80);
+        const rot = Math.random()*720 - 360;
+        el.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) rotate(${rot}deg) scale(1)`;
+        el.style.opacity = '1';
+        setTimeout(()=>{ el.style.opacity='0';}, 1400);
+        setTimeout(()=>{ el.remove(); }, 2000);
+      });
+    }
+  }
+
+  // Accessibility: enable keyboard nav between panels
+  window.addEventListener('keydown', e=>{
+    if(['ArrowDown','PageDown','ArrowUp','PageUp'].includes(e.key)){
+      const panels = [...document.querySelectorAll('.panel')];
+      const current = panels.findIndex(p=> p.getBoundingClientRect().top >= -20 && p.getBoundingClientRect().top < window.innerHeight/2);
+      let targetIndex = current;
+      if(e.key==='ArrowDown' || e.key==='PageDown') targetIndex = Math.min(panels.length-1,current+1);
+      if(e.key==='ArrowUp' || e.key==='PageUp') targetIndex = Math.max(0,current-1);
+      panels[targetIndex].scrollIntoView({behavior:'smooth'});
+    }
+  });
+  </script>
+</body>
+</html>
